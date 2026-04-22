@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《歪兒》課文調適互動學習網</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    keyframes: {
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-5px)' },
+                            '50%': { transform: 'translateX(5px)' },
+                            '75%': { transform: 'translateX(-5px)' },
+                        },
+                        popIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    },
+                    animation: {
+                        shake: 'shake 0.4s ease-in-out',
+                        popIn: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F8FAFC; 
+            color: #334155;
+            line-height: 1.8;
+            letter-spacing: 0.05em;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: popIn 0.4s ease-out forwards; }
+        
+        .interactive-blank {
+            display: inline-block;
+            background-color: #E0E7FF;
+            color: #4F46E5;
+            padding: 2px 12px;
+            border-radius: 8px;
+            border: 2px dashed #4F46E5;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            min-width: 80px;
+            text-align: center;
+        }
+        .interactive-blank:hover { background-color: #C7D2FE; transform: translateY(-2px); }
+        .interactive-blank.revealed {
+            background-color: #10B981;
+            color: white;
+            border: 2px solid #059669;
+            cursor: default;
+            animation: popIn 0.3s;
+        }
+
+        .speak-btn {
+            background-color: #FEF3C7;
+            color: #D97706;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            border: 2px solid #FDE68A;
+            flex-shrink: 0;
+        }
+        .speak-btn:hover { transform: scale(1.1) rotate(5deg); background-color: #FDE68A; }
+        .speak-btn:active { transform: scale(0.95); }
+
+        .binary-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mindmap-node {
+            transition: transform 0.3s ease;
+        }
+        .mindmap-node:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        @media (min-width: 768px) {
+            .nav-btn-grid { grid-template-columns: repeat(5, 1fr); }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- 頂部導航與標題 -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg rounded-b-3xl border-b-8 border-yellow-400">
+        <div class="max-w-5xl mx-auto flex flex-col justify-center items-center gap-2 text-center">
+            <h1 class="text-3xl md:text-4xl font-black tracking-wider flex items-center justify-center flex-wrap gap-3">
+                <span>📚</span> 《歪兒》課文調適學習網
+            </h1>
+            <p class="text-indigo-100 font-bold bg-white/20 px-6 py-2 rounded-full shadow-inner mt-2">
+                作者：馮驥才
+            </p>
+        </div>
+    </header>
+
+    <!-- 分頁按鈕 -->
+    <nav class="max-w-5xl mx-auto mt-6 px-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 bg-white p-3 rounded-2xl shadow-sm border-2 border-indigo-50 nav-btn-grid">
+            <button onclick="switchTab('tab1')" class="tab-btn active py-3 px-2 rounded-xl font-bold transition-all bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-b-4 border-indigo-300" id="btn-tab1">1. 記敍六要素</button>
+            <button onclick="switchTab('tab2')" class="tab-btn py-3 px-2 rounded-xl font-bold transition-all text-gray-500 hover:bg-indigo-50" id="btn-tab2">2. 順敍與倒敍</button>
+            <button onclick="switchTab('tab3')" class="tab-btn py-3 px-2 rounded-xl font-bold transition-all text-gray-500 hover:bg-indigo-50" id="btn-tab3">3. 課文拆解</button>
+            <button onclick="switchTab('tab4')" class="tab-btn py-3 px-2 rounded-xl font-bold transition-all text-gray-500 hover:bg-indigo-50" id="btn-tab4">4. 認識詞性</button>
+            <button onclick="switchTab('tab5')" class="tab-btn col-span-2 md:col-span-1 py-3 px-2 rounded-xl font-bold transition-all text-gray-500 hover:bg-yellow-100 border-2 border-dashed border-yellow-400" id="btn-tab5">5. 筆記腦圖 🧠</button>
+        </div>
+    </nav>
+
+    <!-- 主要內容區 -->
+    <main class="max-w-5xl mx-auto mt-8 px-4">
+
+        <!-- Tab 1: 記敍 6 要素與例子 -->
+        <section id="tab1" class="tab-content active bg-white rounded-3xl p-6 md:p-8 shadow-xl border-t-8 border-indigo-400">
+            <div class="flex items-center justify-between mb-6 border-b-2 border-gray-100 pb-4">
+                <h2 class="text-2xl font-black text-gray-800">目標一：認識記敍 6 要素</h2>
+                <button class="speak-btn text-xl" onclick="speakText('目標一：認識記敍六要素。講故事時需要六件事：時間、地點、人物、起因、經過、結果。請看下方的例子。')">🔊</button>
+            </div>
+            
+            <div class="bg-blue-50 rounded-2xl p-6 mb-8 border-2 border-blue-100 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-blue-200 text-blue-800 px-4 py-1 rounded-bl-xl font-bold text-sm">示範例子</div>
+                <h3 class="text-xl font-bold mb-4 text-blue-800">📖 故事大綱範例</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-lg">
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="font-bold text-gray-500">⏰ 時間：</span> <span class="text-blue-700 font-bold">2025年夏天</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="font-bold text-gray-500">🌍 地點：</span> <span class="text-blue-700 font-bold">學校操場</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="font-bold text-gray-500">👨‍👩‍👧 人物：</span> <span class="text-blue-700 font-bold">我和好友小美</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="font-bold text-gray-500">❓ 起因：</span> <span class="text-blue-700 font-bold">因為一場誤會</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm md:col-span-2"><span class="font-bold text-gray-500">🏃‍♂️ 經過：</span> <span class="text-blue-700 font-bold">我們先是爭執，後來共同解決難題</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm md:col-span-2"><span class="font-bold text-gray-500">🎯 結果：</span> <span class="text-blue-700 font-bold">誤會解開，我們和好如初</span></div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-50 rounded-2xl p-6 border-2 border-indigo-100">
+                <h3 class="text-xl font-bold text-indigo-800 flex items-center gap-2 mb-4">
+                    ✐ 練習：配對題 (小妍的生日)
+                    <button class="speak-btn text-base" onclick="speakText('練習配對題。請為左邊的六要素，選擇右邊正確的故事內容。')">🔊</button>
+                </h3>
+                <div class="space-y-3" id="matching-game">
+                    <!-- JS 生成 -->
+                </div>
+                <div id="match-feedback" class="mt-4 text-center font-bold text-xl hidden p-4 rounded-xl bg-green-500 text-white shadow-lg animate-popIn">
+                    🎉 太棒了！全部配對正確！
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: 順敍法與倒敍法 -->
+        <section id="tab2" class="tab-content bg-white rounded-3xl p-6 md:p-8 shadow-xl border-t-8 border-green-400">
+            <div class="flex items-center justify-between mb-6 border-b-2 border-gray-100 pb-4">
+                <h2 class="text-2xl font-black text-gray-800">目標二：認識順敍法、倒敍法</h2>
+                <button class="speak-btn text-xl" onclick="speakText('目標二：認識記敍手法。順敍法是按照時間先後寫。倒敍法是把結局先寫出來。')">🔊</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-green-50 p-6 rounded-2xl border-2 border-green-200">
+                    <div class="text-3xl mb-2">➡️</div>
+                    <h3 class="text-xl font-bold text-green-800 mb-2">順敍法</h3>
+                    <p class="text-gray-700 font-bold bg-white p-3 rounded-lg">按照事件發生的 <span class="text-green-600 underline">時間順序</span> 敘述。</p>
+                    <p class="text-sm text-gray-500 mt-2 font-bold">順序：起因 → 經過 → 結果</p>
+                </div>
+                <div class="bg-purple-50 p-6 rounded-2xl border-2 border-purple-200">
+                    <div class="text-3xl mb-2">↩️</div>
+                    <h3 class="text-xl font-bold text-purple-800 mb-2">倒敍法</h3>
+                    <p class="text-gray-700 font-bold bg-white p-3 rounded-lg">把事件的 <span class="text-purple-600 underline">結局或重要片段</span> 先寫出來，再按順序寫。</p>
+                    <p class="text-sm text-gray-500 mt-2 font-bold">順序：結果 → 起因 → 經過</p>
+                </div>
+            </div>
+
+            <div class="bg-white border-4 border-yellow-200 rounded-2xl p-6 shadow-md relative">
+                <div class="absolute -top-4 left-6 bg-yellow-400 text-yellow-900 font-black px-4 py-1 rounded-full shadow-sm">課文問答挑戰 ⚔️</div>
+                <h3 class="text-xl font-bold mt-4 mb-6 text-gray-800 text-center">作者運用了哪一種記敍方法來記述故事？</h3>
+                
+                <div class="mb-8 border-b-2 border-dashed pb-6">
+                    <p class="font-bold text-lg mb-3">1. 本課的記敍方法是：</p>
+                    <div class="flex gap-4 binary-container">
+                        <button onclick="checkBinary(this, true, '順敍法')" class="binary-btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 px-2 rounded-xl border-2 border-gray-300 text-lg">順敍法</button>
+                        <button onclick="checkBinary(this, false, '倒敍法')" class="binary-btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 px-2 rounded-xl border-2 border-gray-300 text-lg">倒敍法</button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="font-bold text-lg mb-3">2. 這樣寫的好處：</p>
+                    <div class="flex gap-4 binary-container">
+                        <button onclick="checkBinary(this, false, '製造懸念')" class="binary-btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 px-2 rounded-xl border-2 border-gray-300 text-lg">❓ 製造懸念</button>
+                        <button onclick="checkBinary(this, true, '條理清晰')" class="binary-btn flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 px-2 rounded-xl border-2 border-gray-300 text-lg">✨ 條理清晰</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: 《歪兒》的課文要素、問答與主旨 -->
+        <section id="tab3" class="tab-content bg-white rounded-3xl p-6 md:p-8 shadow-xl border-t-8 border-yellow-400">
+            <div class="flex items-center justify-between mb-6 border-b-2 border-gray-100 pb-4">
+                <h2 class="text-2xl font-black text-gray-800">目標三：課文拆解與主旨</h2>
+                <button class="speak-btn text-xl" onclick="speakText('這裡有課文的重點填空、選擇題，還有文章的大主旨！')">🔊</button>
+            </div>
+
+            <!-- Part A: 要素找一找 -->
+            <h3 class="text-xl font-bold text-yellow-700 mb-4 flex items-center gap-2">🔍 任務一：找出 6 要素</h3>
+            <div class="bg-yellow-50 border-l-8 border-yellow-400 p-4 mb-6 rounded-r-xl shadow-sm">
+                <p class="font-bold text-yellow-800">💡 魔法提示：點擊藍色的框框 <span class="interactive-blank" style="min-width:40px;">?</span> 就會蹦出正確答案喔！</p>
+            </div>
+
+            <div class="space-y-4 text-lg bg-gray-50 p-6 rounded-2xl border-2 border-gray-200 mb-10" id="elements-container">
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center pb-4 border-b border-gray-200">
+                    <div class="font-bold text-blue-700 w-24 flex items-center gap-2"><span class="text-2xl">⏰</span> 時間</div>
+                    <div class="flex-1"><span class="interactive-blank elem-blank" onclick="revealText(this, '某個暑假', 'elem')">點我顯示</span></div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center pb-4 border-b border-gray-200">
+                    <div class="font-bold text-green-700 w-24 flex items-center gap-2"><span class="text-2xl">🌍</span> 地點</div>
+                    <div class="flex-1"><span class="interactive-blank elem-blank" onclick="revealText(this, '街的中央', 'elem')">點我顯示</span></div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center pb-4 border-b border-gray-200">
+                    <div class="font-bold text-yellow-700 w-24 flex items-center gap-2"><span class="text-2xl">👨‍👩‍👧</span> 人物</div>
+                    <div class="flex-1 leading-loose">
+                        作者、歪兒、其他同伴、<span class="interactive-blank elem-blank" onclick="revealText(this, '歪兒的母親', 'elem')">點我顯示</span>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 items-start pb-4 border-b border-gray-200">
+                    <div class="font-bold text-red-700 w-24 flex items-center gap-2 mt-1"><span class="text-2xl">❓</span> 起因</div>
+                    <div class="flex-1">
+                        玩「踢罐電報」時，大家 <span class="interactive-blank elem-blank" onclick="revealText(this, '欺負歪兒', 'elem')">點我顯示</span> ，拿他取樂。
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 items-start pb-4 border-b border-gray-200">
+                    <div class="font-bold text-purple-700 w-24 flex items-center gap-2 mt-1"><span class="text-2xl">🏃‍♂️</span> 經過</div>
+                    <div class="flex-1">
+                        歪兒被媽媽帶回家。後來他把長鐵罐借給大家，作者感到 <span class="interactive-blank elem-blank" onclick="revealText(this, '內疚', 'elem')">點我顯示</span> ，叫他一起玩。
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 items-start pt-2">
+                    <div class="font-bold text-pink-700 w-24 flex items-center gap-2 mt-1"><span class="text-2xl">🎯</span> 結果</div>
+                    <div class="flex-1">
+                        歪兒回到同伴中間，大家都 <span class="interactive-blank elem-blank" onclick="revealText(this, '暗中幫助他', 'elem')">點我顯示</span> 。
+                    </div>
+                </div>
+                <div id="fill-feedback-elem" class="mt-4 text-center font-bold text-xl hidden p-4 rounded-xl bg-green-500 text-white shadow-lg">🌟 找出了所有故事重點！</div>
+            </div>
+
+            <!-- Part B: 內容二選一 -->
+            <h3 class="text-xl font-bold text-indigo-700 mb-4 flex items-center gap-2">🎯 任務二：故事細節大考驗</h3>
+            <div class="grid grid-cols-1 gap-6 mb-10">
+                <div class="bg-white border-2 border-indigo-100 p-5 rounded-2xl shadow-sm">
+                    <p class="font-bold text-lg mb-3">1. 遊戲開始時，歪兒為什麼總是當「捉人」的苦差事？</p>
+                    <div class="flex flex-col md:flex-row gap-3 binary-container">
+                        <button onclick="checkBinary(this, false, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-3 rounded-lg border-2 border-gray-200">因為他喜歡捉人</button>
+                        <button onclick="checkBinary(this, true, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-3 rounded-lg border-2 border-gray-200">因為他腿腳不靈活，跑不快</button>
+                    </div>
+                </div>
+                <div class="bg-white border-2 border-indigo-100 p-5 rounded-2xl shadow-sm">
+                    <p class="font-bold text-lg mb-3">2. 歪兒的媽媽看到歪兒被欺負時，她的反應是什麼？</p>
+                    <div class="flex flex-col md:flex-row gap-3 binary-container">
+                        <button onclick="checkBinary(this, true, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-3 rounded-lg border-2 border-gray-200">粗暴地打歪兒，並把他拉回家</button>
+                        <button onclick="checkBinary(this, false, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-3 rounded-lg border-2 border-gray-200">溫柔地安慰歪兒，叫他不要哭</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part C: 文章主旨 -->
+            <h3 class="text-xl font-bold text-green-700 mb-4 flex items-center gap-2">📖 任務三：文章主旨 (中心思想)</h3>
+            <div class="bg-green-50 p-6 rounded-2xl border-2 border-green-200 text-lg leading-loose relative" id="theme-container">
+                <p class="mb-2 font-bold text-green-900">✏️ 點擊框框，完成這篇文章要帶給我們的啟發：</p>
+                作者透過記述兒時同伴 <span class="interactive-blank theme-blank" onclick="revealText(this, '欺負', 'theme')">點我顯示</span> 歪兒，後來歪兒以德報怨借出鐵罐，令大家感到 <span class="interactive-blank theme-blank" onclick="revealText(this, '內疚', 'theme')">點我顯示</span> 並重新接納他的事，帶出同學之間應 <span class="interactive-blank theme-blank" onclick="revealText(this, '互相包容', 'theme')">點我顯示</span>、不可 <span class="interactive-blank theme-blank" onclick="revealText(this, '恃強凌弱', 'theme')">點我顯示</span> 的道理。
+                <div id="fill-feedback-theme" class="mt-6 text-center font-bold text-xl hidden p-4 rounded-xl bg-green-600 text-white shadow-lg">🌟 沒錯！這就是《歪兒》的主旨！</div>
+            </div>
+
+        </section>
+
+        <!-- Tab 4: 認識詞性與情感 (更新了「朦朧」與「躥出」) -->
+        <section id="tab4" class="tab-content bg-white rounded-3xl p-6 md:p-8 shadow-xl border-t-8 border-pink-400">
+            <div class="mb-12">
+                <div class="flex items-center justify-between mb-6 border-b-2 border-gray-100 pb-4">
+                    <h2 class="text-2xl font-black text-gray-800">目標四：認識詞性</h2>
+                    <button class="speak-btn text-xl" onclick="speakText('目標四，認識詞性。中文有很多種詞語，例如名詞、動詞、形容詞和副詞。請幫這兩個詞語選擇正確的詞性。')">🔊</button>
+                </div>
+                
+                <!-- 四大詞性解說板 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 text-center">
+                        <div class="text-2xl mb-1">🍎👤</div>
+                        <div class="font-black text-blue-800 text-lg">名詞 (n.)</div>
+                        <div class="text-sm text-gray-600">表示人或事物的名稱。</div>
+                        <div class="text-xs text-blue-600 mt-1">例：蘋果、歪兒、鐵罐</div>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-xl border border-red-200 text-center">
+                        <div class="text-2xl mb-1">🏃‍♂️💪</div>
+                        <div class="font-black text-red-800 text-lg">動詞 (v.)</div>
+                        <div class="text-sm text-gray-600">表示動作或行為。</div>
+                        <div class="text-xs text-red-600 mt-1">例：跑、踢、哭泣</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-200 text-center">
+                        <div class="text-2xl mb-1">🌟🦋</div>
+                        <div class="font-black text-green-800 text-lg">形容詞 (adj.)</div>
+                        <div class="text-sm text-gray-600">形容人或事物的狀態。</div>
+                        <div class="text-xs text-green-600 mt-1">例：漂亮、細長、粗暴</div>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded-xl border border-purple-200 text-center">
+                        <div class="text-2xl mb-1">⚡🐢</div>
+                        <div class="font-black text-purple-800 text-lg">副詞 (adv.)</div>
+                        <div class="text-sm text-gray-600">形容動作進行的情形。</div>
+                        <div class="text-xs text-purple-600 mt-1">例：慢慢地、突然、暗中</div>
+                    </div>
+                </div>
+
+                <!-- 詞語測驗 (更新為 朦朧 與 躥出) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Word 1: 朦朧 -->
+                    <div class="bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-sm">
+                        <div class="text-2xl font-black text-indigo-700 mb-2">朦朧</div>
+                        <p class="text-gray-600 mb-4">意思：模糊不清的樣子 (hazy)。</p>
+                        <p class="font-bold mb-2">請問「朦朧」是甚麼詞性？</p>
+                        <div class="flex gap-2 binary-container">
+                            <button onclick="checkBinary(this, false, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-2 rounded-lg border">動詞</button>
+                            <button onclick="checkBinary(this, true, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-2 rounded-lg border">形容詞</button>
+                        </div>
+                    </div>
+
+                    <!-- Word 2: 躥出 -->
+                    <div class="bg-white border-2 border-pink-100 rounded-2xl p-5 shadow-sm">
+                        <div class="text-2xl font-black text-pink-700 mb-2">躥出</div>
+                        <p class="text-gray-600 mb-4">意思：突然跳出或衝出 (jump out)。</p>
+                        <p class="font-bold mb-2">請問「躥出」是甚麼詞性？</p>
+                        <div class="flex gap-2 binary-container">
+                            <button onclick="checkBinary(this, false, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-2 rounded-lg border">副詞</button>
+                            <button onclick="checkBinary(this, true, '')" class="binary-btn flex-1 bg-gray-50 hover:bg-gray-200 font-bold py-2 rounded-lg border">動詞</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 情感溫度計 -->
+            <div>
+                <div class="flex items-center justify-between mb-6 border-b-2 border-gray-100 pb-4">
+                    <h2 class="text-2xl font-black text-gray-800">特別加碼：作者的情感溫度計</h2>
+                    <button class="speak-btn text-xl" onclick="speakText('點擊這四個階段，看看作者的心情是如何變化的。')">🔊</button>
+                </div>
+                <p class="text-gray-600 font-bold mb-6">💡 隨着事情的發展，作者對歪兒的感情發生了改變。點擊下方卡片看看！</p>
+                
+                <div class="relative">
+                    <div class="absolute left-8 top-0 bottom-0 w-1 bg-gray-200 z-0 hidden md:block"></div>
+                    <div class="space-y-4 relative z-10">
+                        <div class="flex items-center gap-4 cursor-pointer group" onclick="toggleEmotion(this)">
+                            <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-3xl shadow-md border-4 border-white z-10 group-hover:scale-110 transition-transform">😏</div>
+                            <div class="flex-1 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <div class="font-black text-blue-800 text-lg">第一階段：覺得好玩、嫌棄</div>
+                                <div class="emotion-desc hidden mt-2 text-gray-700 bg-white p-2 rounded">故意欺負歪兒，拿他取樂。</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 cursor-pointer group" onclick="toggleEmotion(this)">
+                            <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center text-3xl shadow-md border-4 border-white z-10 group-hover:scale-110 transition-transform">😲</div>
+                            <div class="flex-1 bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+                                <div class="font-black text-yellow-800 text-lg">第二階段：驚訝、錯愕</div>
+                                <div class="emotion-desc hidden mt-2 text-gray-700 bg-white p-2 rounded">看到歪兒媽媽粗暴打人，感到驚訝。</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 cursor-pointer group" onclick="toggleEmotion(this)">
+                            <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-3xl shadow-md border-4 border-white z-10 group-hover:scale-110 transition-transform">😔</div>
+                            <div class="flex-1 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                                <div class="font-black text-indigo-800 text-lg">第三階段：內疚、後悔</div>
+                                <div class="emotion-desc hidden mt-2 text-gray-700 bg-white p-2 rounded">歪兒把鐵罐借給大家，作者感到深深內疚。</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 cursor-pointer group" onclick="toggleEmotion(this)">
+                            <div class="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center text-3xl shadow-md border-4 border-white z-10 group-hover:scale-110 transition-transform">🤝</div>
+                            <div class="flex-1 bg-pink-50 p-4 rounded-xl border border-pink-100">
+                                <div class="font-black text-pink-800 text-lg">第四階段：同理心、包容</div>
+                                <div class="emotion-desc hidden mt-2 text-gray-700 bg-white p-2 rounded">主主動邀請歪兒，遊戲時暗中幫助他。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 5: 筆記腦圖 -->
+        <section id="tab5" class="tab-content bg-white rounded-3xl p-6 md:p-8 shadow-xl border-t-8 border-orange-400">
+            <div class="flex items-center justify-between mb-8 border-b-2 border-gray-100 pb-4">
+                <h2 class="text-2xl md:text-3xl font-black text-gray-800">目標五：總結筆記腦圖 🧠</h2>
+                <button class="speak-btn text-xl" onclick="speakText('這是整課的總結筆記腦圖。你可以利用這張圖來溫習。')" title="朗讀">🔊</button>
+            </div>
+            
+            <p class="text-center font-bold text-gray-600 mb-8 bg-orange-50 py-2 rounded-lg">💡 一張圖看懂《歪兒》的所有學習重點！</p>
+
+            <div class="flex flex-col items-center">
+                <!-- 中心節點 -->
+                <div class="bg-indigo-600 text-white font-black text-2xl py-4 px-8 rounded-full shadow-lg z-10 mindmap-node border-4 border-indigo-200">
+                    📖 課文：《歪兒》
+                </div>
+                
+                <div class="w-1 h-8 bg-indigo-300"></div>
+                <div class="w-full max-w-4xl border-t-4 border-indigo-300 rounded-t-lg h-4 relative"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-2 w-full max-w-5xl mt-2 relative">
+                    
+                    <!-- 分支 1：寫作手法 -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-1 h-6 bg-indigo-300 md:hidden"></div>
+                        <div class="bg-green-500 text-white font-bold py-2 px-4 rounded-xl shadow-md w-full text-center mindmap-node mb-3">
+                            ✍️ 寫作手法
+                        </div>
+                        <div class="bg-green-50 border-2 border-green-200 rounded-xl p-3 w-full text-sm font-bold text-gray-700 shadow-sm h-full">
+                            <p class="text-green-700 text-base mb-1">順敍法</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>按時間順序寫</li>
+                                <li>起因 ➡️ 經過 ➡️ 結果</li>
+                                <li>好處：<span class="text-green-600">條理清晰</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 分支 2：主旨與要素 -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-1 h-6 bg-indigo-300 md:hidden"></div>
+                        <div class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl shadow-md w-full text-center mindmap-node mb-3">
+                            🧩 要素與主旨
+                        </div>
+                        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 w-full text-sm font-bold text-gray-700 shadow-sm h-full">
+                            <p class="text-blue-700 text-base mb-1 border-b border-blue-200 pb-1">主旨：</p>
+                            <p class="mb-2">同學間應<span class="text-blue-600">互相包容</span>，不可恃強凌弱。</p>
+                            <p class="text-blue-700 text-base mb-1 border-b border-blue-200 pb-1">要素：</p>
+                            <ul class="space-y-1 text-xs">
+                                <li>時：暑假 / 地：街中央</li>
+                                <li>起因：欺負歪兒取樂</li>
+                                <li>經過：歪兒借出鐵罐</li>
+                                <li>結果：大家暗中幫他</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 分支 3：情感變化 -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-1 h-6 bg-indigo-300 md:hidden"></div>
+                        <div class="bg-pink-500 text-white font-bold py-2 px-4 rounded-xl shadow-md w-full text-center mindmap-node mb-3">
+                            ❤️ 作者情感
+                        </div>
+                        <div class="bg-pink-50 border-2 border-pink-200 rounded-xl p-3 w-full text-sm font-bold text-gray-700 shadow-sm relative pl-6 h-full">
+                            <div class="absolute left-3 top-4 bottom-4 w-0.5 bg-pink-300"></div>
+                            <div class="relative mb-2 mt-1"><span class="absolute -left-4 w-2 h-2 rounded-full bg-pink-500 top-1.5"></span>1. 嫌棄好玩</div>
+                            <div class="relative mb-2"><span class="absolute -left-4 w-2 h-2 rounded-full bg-pink-500 top-1.5"></span>2. 驚訝錯愕</div>
+                            <div class="relative mb-2"><span class="absolute -left-4 w-2 h-2 rounded-full bg-pink-500 top-1.5"></span>3. 內疚後悔</div>
+                            <div class="relative"><span class="absolute -left-4 w-2 h-2 rounded-full bg-pink-500 top-1.5"></span>4. 同理包容</div>
+                        </div>
+                    </div>
+
+                    <!-- 分支 4：認識詞性 (更新例子) -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-1 h-6 bg-indigo-300 md:hidden"></div>
+                        <div class="bg-purple-500 text-white font-bold py-2 px-4 rounded-xl shadow-md w-full text-center mindmap-node mb-3">
+                            📝 認識詞性
+                        </div>
+                        <div class="bg-purple-50 border-2 border-purple-200 rounded-xl p-3 w-full text-sm font-bold text-gray-700 shadow-sm h-full">
+                            <ul class="space-y-3">
+                                <li class="leading-tight"><span class="text-purple-700 bg-purple-100 px-1 rounded">名詞</span> 人/事物<br><span class="text-xs font-bold text-gray-500 ml-1">例：歪兒 (n.)</span></li>
+                                <li class="leading-tight"><span class="text-purple-700 bg-purple-100 px-1 rounded">動詞</span> 動作行為<br><span class="text-xs font-bold text-gray-500 ml-1">例：躥出 (v.)</span></li>
+                                <li class="leading-tight"><span class="text-purple-700 bg-purple-100 px-1 rounded">形容詞</span> 形容狀態<br><span class="text-xs font-bold text-gray-500 ml-1">例：朦朧 (adj.)</span></li>
+                                <li class="leading-tight"><span class="text-purple-700 bg-purple-100 px-1 rounded">副詞</span> 動作情形<br><span class="text-xs font-bold text-gray-500 ml-1">例：暗中 (adv.)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="mt-12 text-center">
+                <button onclick="window.print()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center justify-center mx-auto gap-2">
+                    🖨️ 列印或儲存此腦圖
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 1. 分頁切換功能 ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'text-indigo-700', 'border-b-4', 'border-indigo-300', 'bg-yellow-100');
+                btn.classList.add('text-gray-500');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-gray-500');
+            
+            if(tabId === 'tab5') {
+                activeBtn.classList.add('bg-yellow-100', 'text-yellow-800');
+            } else {
+                activeBtn.classList.add('bg-indigo-100', 'text-indigo-700', 'border-b-4', 'border-indigo-300');
+            }
+        }
+
+        // --- 2. 語音朗讀功能 ---
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'zh-HK'; 
+                msg.rate = 0.85; 
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        // --- 3. 填空題點擊顯示功能 (分組驗證) ---
+        function revealText(element, answer, group) {
+            if (!element.classList.contains('revealed')) {
+                element.innerText = answer;
+                element.classList.add('revealed');
+                
+                // 發射小彩帶
+                confetti({ particleCount: 30, spread: 40, origin: { y: 0.7, x: element.getBoundingClientRect().left / window.innerWidth } });
+                checkGroupRevealed(group);
+            }
+        }
+
+        function checkGroupRevealed(group) {
+            const allBlanks = document.querySelectorAll(`.${group}-blank`);
+            const revealedBlanks = document.querySelectorAll(`.${group}-blank.revealed`);
+            if(allBlanks.length === revealedBlanks.length) {
+                document.getElementById(`fill-feedback-${group}`).classList.remove('hidden');
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                
+                // 給予不同的語音回饋
+                if(group === 'elem') setTimeout(() => speakText('好厲害！找出了所有要素重點！'), 500);
+                if(group === 'theme') setTimeout(() => speakText('沒錯！同學之間應該互相包容！'), 500);
+            }
+        }
+
+        // --- 4. 情感溫度計開關功能 ---
+        function toggleEmotion(element) {
+            const desc = element.querySelector('.emotion-desc');
+            if(desc.classList.contains('hidden')) {
+                desc.classList.remove('hidden');
+                desc.classList.add('animate-popIn');
+                speakText(desc.innerText);
+            } else {
+                desc.classList.add('hidden');
+                desc.classList.remove('animate-popIn');
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        // --- 5. 二選一按鈕邏輯 (含特效) ---
+        function checkBinary(btn, isCorrect, answerText) {
+            const container = btn.closest('.binary-container');
+            const allBtns = container.querySelectorAll('.binary-btn');
+            
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.remove('bg-gray-50', 'text-gray-700', 'border-gray-200');
+                btn.classList.add('bg-green-500', 'text-white', 'border-green-600', 'scale-105', 'shadow-lg');
+                
+                const rect = btn.getBoundingClientRect();
+                const x = (rect.left + rect.width / 2) / window.innerWidth;
+                const y = (rect.top + rect.height / 2) / window.innerHeight;
+                confetti({ particleCount: 80, spread: 70, origin: { x: x, y: y } });
+                
+                speakText('答對了！');
+            } else {
+                btn.classList.remove('bg-gray-50', 'text-gray-700', 'border-gray-200');
+                btn.classList.add('bg-red-500', 'text-white', 'border-red-600', 'animate-shake');
+                speakText('不對喔，再想一想');
+                
+                setTimeout(() => {
+                    btn.classList.remove('bg-red-500', 'text-white', 'border-red-600', 'animate-shake');
+                    btn.classList.add('bg-gray-50', 'text-gray-700', 'border-gray-200');
+                    allBtns.forEach(b => b.disabled = false);
+                }, 1500);
+            }
+        }
+
+        // --- 6. 配對題生成與驗證 (小妍生日) ---
+        const matchData = [
+            { id: 'time', label: '⏰ 時間', answer: '2023年12月24日' },
+            { id: 'place', label: '🌍 地點', answer: '家中的廚房' },
+            { id: 'people', label: '👨‍👩‍👧 人物', answer: '小妍、她的父母和哥哥' },
+            { id: 'cause', label: '❓ 起因', answer: '今天是小妍的生日，家人決定一起製作蛋糕' },
+            { id: 'process', label: '🏃‍♂️ 經過', answer: '一家人忙碌著，父母攪拌麵糊，哥哥準備材料' },
+            { id: 'result', label: '🎯 結果', answer: '蛋糕做好了，大家為小妍唱生日歌' }
+        ];
+
+        const options = matchData.map(d => d.answer).sort(() => Math.random() - 0.5);
+
+        function initMatchingGame() {
+            const container = document.getElementById('matching-game');
+            matchData.forEach(item => {
+                let html = `
+                    <div class="flex flex-col md:flex-row items-center gap-3 bg-white p-3 rounded-xl border border-indigo-100 shadow-sm transition-all hover:border-indigo-300">
+                        <div class="font-bold text-indigo-800 w-full md:w-32 bg-indigo-50 p-2 rounded-lg text-center">${item.label}</div>
+                        <select id="select-${item.id}" class="flex-1 p-3 border-2 border-gray-200 rounded-lg text-gray-700 focus:border-indigo-500 outline-none w-full cursor-pointer bg-white font-bold" onchange="checkMatch()">
+                            <option value="">-- 點擊選擇 --</option>
+                            ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function checkMatch() {
+            let allCorrect = true;
+            matchData.forEach(item => {
+                const selectBox = document.getElementById(`select-${item.id}`);
+                if (selectBox.value === item.answer) {
+                    selectBox.classList.remove('bg-white', 'border-gray-200', 'border-red-300', 'text-red-600');
+                    selectBox.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                    selectBox.disabled = true; 
+                } else if (selectBox.value !== "") {
+                    selectBox.classList.remove('bg-white', 'border-gray-200');
+                    selectBox.classList.add('border-red-300', 'text-red-600', 'bg-red-50');
+                    allCorrect = false;
+                } else {
+                    allCorrect = false;
+                }
+            });
+
+            if(allCorrect) {
+                document.getElementById('match-feedback').classList.remove('hidden');
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+                speakText('太棒了！配對題全部答對了！');
+            }
+        }
+
+        window.onload = () => {
+            initMatchingGame();
+        };
+
+    </script>
+</body>
+</html>
